@@ -12,7 +12,6 @@ pdf_folder = script_folder
 
 cumulative_file = os.path.join(script_folder, "cumulative_data.json")
 
-# Load or initialize
 cumulative = {
     "start_date": "2026-02-12",
     "start_pnl": 0.0,
@@ -49,15 +48,14 @@ for pdf_path in sorted(pdf_files):
     try:
         with pdfplumber.open(pdf_path) as pdf:
             text = ""
-            tables = []
+            all_tables = []
             for page in pdf.pages:
                 page_text = page.extract_text()
                 if page_text:
                     text += page_text + "\n"
-                tables.extend(page.extract_tables())
+                all_tables.extend(page.extract_tables())
 
         today = {
-            "pnl": 0.0,
             "gross_pnl": 0.0,
             "fees": 0.0,
             "net_pnl": 0.0,
@@ -66,7 +64,7 @@ for pdf_path in sorted(pdf_files):
             "trades": []
         }
 
-        # Parse summary text (Gross P/L, Total P/L, Fees, % Profitable)
+        # Parse summary stats from text
         lines = text.splitlines()
         for line in lines:
             line = line.strip()
@@ -74,28 +72,24 @@ for pdf_path in sorted(pdf_files):
                 try:
                     val = float(line.split()[-1].replace(',', '').replace('$', ''))
                     today["gross_pnl"] = val
-                    print(f"  Gross P/L: ${val:.2f}")
                 except:
                     pass
             if "Trade Fees & Comm." in line:
                 try:
                     val = float(line.split()[-1].replace(',', '').replace('$', '').replace('(', '-').replace(')', ''))
                     today["fees"] = val
-                    print(f"  Fees: ${val:.2f}")
                 except:
                     pass
             if "Total P/L" in line:
                 try:
                     val = float(line.split()[-1].replace(',', '').replace('$', ''))
                     today["net_pnl"] = val
-                    print(f"  Total P/L: ${val:.2f}")
                 except:
                     pass
             if "% Profitable Trades" in line:
                 try:
                     val = float(line.split()[-1].replace('%', ''))
                     today["win_rate"] = val
-                    print(f"  Win rate: {val}%")
                 except:
                     pass
             if "# of Trades" in line:
@@ -105,26 +99,24 @@ for pdf_path in sorted(pdf_files):
                 except:
                     pass
 
-        # Trades table (usually last table)
-        if tables and len(tables) > 0:
-            trade_table = tables[-1]
-            if len(trade_table) > 1:
-                header = trade_table[0]
+        # Trades table - find the table with 9 rows (header + 8 trades)
+        for table in all_tables:
+            if len(table) == 9:  # your example has 9 rows
+                print(f"  Found trades table with 8 trades")
+                header = table[0]
                 pnl_col = -1
                 for i, h in enumerate(header):
                     if "p&l" in str(h).lower():
                         pnl_col = i
                         break
                 if pnl_col == -1:
-                    pnl_col = len(header) - 1  # last column
+                    pnl_col = len(header) - 1
 
-                print(f"  Trades table found. P&L column: {pnl_col}")
-                for row in trade_table[1:]:
+                for row in table[1:]:
                     if len(row) > pnl_col and row[pnl_col]:
                         pnl_str = str(row[pnl_col]).strip().replace(',', '').replace('$', '').replace('(', '-').replace(')', '')
                         try:
                             pnl_val = float(pnl_str)
-                            today["pnl"] += pnl_val
                             today["trades"].append({
                                 "symbol": row[0] if len(row) > 0 else "",
                                 "qty": row[1] if len(row) > 1 else "",
@@ -137,18 +129,14 @@ for pdf_path in sorted(pdf_files):
                         except:
                             pass
 
-        if today["pnl"] == 0.0 and today["gross_pnl"] == 0.0:
-            print("  No PnL data found — skipping")
-            continue
-
-        # Prefer net from text if available
         if today["net_pnl"] != 0.0:
             today["pnl"] = today["net_pnl"]
+        elif today["gross_pnl"] != 0.0:
+            today["pnl"] = today["gross_pnl"] + today["fees"]
 
-        # Cumulative
-        last_cumulative = cumulative["daily_entries"][-1]["cumulative_pnl"] if cumulative["daily_entries"] else 0.0
-        today["cumulative_pnl"] = round(last_cumulative + today["pnl"], 2)
-        today["pdf_file"] = pdf_name
+        if today["pnl"] == 0.0:
+            print("  No PnL data — skipping")
+            continue
 
         # Date from filename
         try:
@@ -157,6 +145,11 @@ for pdf_path in sorted(pdf_files):
             today["date"] = dt.strftime("%Y-%m-%d")
         except:
             today["date"] = datetime.now().strftime("%Y-%m-%d")
+
+        # Cumulative
+        last_cumulative = cumulative["daily_entries"][-1]["cumulative_pnl"] if cumulative["daily_entries"] else 0.0
+        today["cumulative_pnl"] = round(last_cumulative + today["pnl"], 2)
+        today["pdf_file"] = pdf_name
 
         cumulative["daily_entries"].append(today)
         new_added = True
@@ -169,7 +162,7 @@ for pdf_path in sorted(pdf_files):
 if new_added:
     with open(cumulative_file, "w") as f:
         json.dump(cumulative, f, indent=2)
-    print("\nSuccess! cumulative_data.json updated.")
+    print("\nSuccess! cumulative_data.json updated with rich data.")
     print("Now open GitHub Desktop → Commit → Push")
 else:
     print("\nNo new PDFs or no PnL found.")

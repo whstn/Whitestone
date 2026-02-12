@@ -13,23 +13,20 @@ pdf_folder = script_folder
 cumulative_file = os.path.join(script_folder, "cumulative_data.json")
 
 # Load or initialize
+cumulative = {
+    "start_date": "2026-02-12",
+    "start_pnl": 0.0,
+    "daily_entries": []
+}
+
 if os.path.exists(cumulative_file):
     try:
         with open(cumulative_file, "r") as f:
-            cumulative = json.load(f)
-    except json.JSONDecodeError:
-        print("cumulative_data.json corrupted — starting fresh")
-        cumulative = {
-            "start_date": "2026-02-12",
-            "start_pnl": 0.0,
-            "daily_entries": []
-        }
-else:
-    cumulative = {
-        "start_date": "2026-02-12",
-        "start_pnl": 0.0,
-        "daily_entries": []
-    }
+            loaded = json.load(f)
+            cumulative.update(loaded)
+            print("Loaded existing data")
+    except:
+        print("Invalid JSON — starting fresh")
 
 processed = {entry.get("pdf_file", "") for entry in cumulative["daily_entries"]}
 
@@ -52,49 +49,106 @@ for pdf_path in sorted(pdf_files):
     try:
         with pdfplumber.open(pdf_path) as pdf:
             text = ""
-            all_tables = []
+            tables = []
             for page in pdf.pages:
                 page_text = page.extract_text()
                 if page_text:
                     text += page_text + "\n"
-                all_tables.extend(page.extract_tables())
+                tables.extend(page.extract_tables())
 
-        today = {"pnl": 0.0}
+        today = {
+            "pnl": 0.0,
+            "gross_pnl": 0.0,
+            "fees": 0.0,
+            "net_pnl": 0.0,
+            "trades_count": 0,
+            "win_rate": 0.0,
+            "trades": []
+        }
 
-        # Text fallback for summary (e.g. "Total P/L $1,335.90")
-        lines = [line.strip() for line in text.splitlines() if line.strip()]
+        # Parse summary text (Gross P/L, Total P/L, Fees, % Profitable)
+        lines = text.splitlines()
         for line in lines:
-            if "Total P/L" in line or "Gross P/L" in line:
-                parts = line.split()
-                for part in reversed(parts):
-                    try:
-                        val = float(part.replace(',', '').replace('$', ''))
-                        today["pnl"] = val
-                        print(f"  Found summary Total P/L: ${val:.2f}")
+            line = line.strip()
+            if "Gross P/L" in line:
+                try:
+                    val = float(line.split()[-1].replace(',', '').replace('$', ''))
+                    today["gross_pnl"] = val
+                    print(f"  Gross P/L: ${val:.2f}")
+                except:
+                    pass
+            if "Trade Fees & Comm." in line:
+                try:
+                    val = float(line.split()[-1].replace(',', '').replace('$', '').replace('(', '-').replace(')', ''))
+                    today["fees"] = val
+                    print(f"  Fees: ${val:.2f}")
+                except:
+                    pass
+            if "Total P/L" in line:
+                try:
+                    val = float(line.split()[-1].replace(',', '').replace('$', ''))
+                    today["net_pnl"] = val
+                    print(f"  Total P/L: ${val:.2f}")
+                except:
+                    pass
+            if "% Profitable Trades" in line:
+                try:
+                    val = float(line.split()[-1].replace('%', ''))
+                    today["win_rate"] = val
+                    print(f"  Win rate: {val}%")
+                except:
+                    pass
+            if "# of Trades" in line:
+                try:
+                    val = int(line.split()[-1])
+                    today["trades_count"] = val
+                except:
+                    pass
+
+        # Trades table (usually last table)
+        if tables and len(tables) > 0:
+            trade_table = tables[-1]
+            if len(trade_table) > 1:
+                header = trade_table[0]
+                pnl_col = -1
+                for i, h in enumerate(header):
+                    if "p&l" in str(h).lower():
+                        pnl_col = i
                         break
-                    except:
-                        pass
+                if pnl_col == -1:
+                    pnl_col = len(header) - 1  # last column
 
-        # Table extraction - look for trades table (has "P&L" header or numeric last column)
-        for table in all_tables:
-            if len(table) > 1:
-                header = [str(cell).strip().lower() for cell in table[0]]
-                if "p&l" in header or "profit/loss" in header or "pnl" in header:
-                    pnl_col = header.index("p&l") if "p&l" in header else -1
-                    print(f"  Found trades table with {len(table)-1} trades. P&L column: {pnl_col}")
-                    for row in table[1:]:
-                        if len(row) > pnl_col and row[pnl_col]:
-                            pnl_str = str(row[pnl_col]).strip().replace(',', '').replace('$', '').replace('(', '-').replace(')', '')
-                            try:
-                                pnl_val = float(pnl_str)
-                                today["pnl"] += pnl_val
-                                print(f"  Added trade PnL: ${pnl_val:.2f}")
-                            except ValueError:
-                                print(f"  Could not parse: '{pnl_str}'")
+                print(f"  Trades table found. P&L column: {pnl_col}")
+                for row in trade_table[1:]:
+                    if len(row) > pnl_col and row[pnl_col]:
+                        pnl_str = str(row[pnl_col]).strip().replace(',', '').replace('$', '').replace('(', '-').replace(')', '')
+                        try:
+                            pnl_val = float(pnl_str)
+                            today["pnl"] += pnl_val
+                            today["trades"].append({
+                                "symbol": row[0] if len(row) > 0 else "",
+                                "qty": row[1] if len(row) > 1 else "",
+                                "buy_price": row[2] if len(row) > 2 else "",
+                                "buy_time": row[3] if len(row) > 3 else "",
+                                "sell_price": row[6] if len(row) > 6 else "",
+                                "pnl": pnl_val
+                            })
+                            print(f"  Added trade PnL: ${pnl_val:.2f}")
+                        except:
+                            pass
 
-        if today["pnl"] == 0.0:
-            print("  No PnL found — skipping")
+        if today["pnl"] == 0.0 and today["gross_pnl"] == 0.0:
+            print("  No PnL data found — skipping")
             continue
+
+        # Prefer net from text if available
+        if today["net_pnl"] != 0.0:
+            today["pnl"] = today["net_pnl"]
+
+        # Cumulative
+        last_cumulative = cumulative["daily_entries"][-1]["cumulative_pnl"] if cumulative["daily_entries"] else 0.0
+        today["cumulative_pnl"] = round(last_cumulative + today["pnl"], 2)
+        today["pdf_file"] = pdf_name
 
         # Date from filename
         try:
@@ -103,11 +157,6 @@ for pdf_path in sorted(pdf_files):
             today["date"] = dt.strftime("%Y-%m-%d")
         except:
             today["date"] = datetime.now().strftime("%Y-%m-%d")
-
-        # Cumulative
-        last_cumulative = cumulative["daily_entries"][-1]["cumulative_pnl"] if cumulative["daily_entries"] else 0.0
-        today["cumulative_pnl"] = round(last_cumulative + today["pnl"], 2)
-        today["pdf_file"] = pdf_name
 
         cumulative["daily_entries"].append(today)
         new_added = True
@@ -124,6 +173,5 @@ if new_added:
     print("Now open GitHub Desktop → Commit → Push")
 else:
     print("\nNo new PDFs or no PnL found.")
-    print("Folder checked:", pdf_folder)
 
 input("\nPress Enter to close...")

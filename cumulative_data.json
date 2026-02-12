@@ -3,10 +3,10 @@
   "start_pnl": 0.0,
   "daily_entries": [
     {
-      "pnl": 2376.4,
+      "pnl": 3434.7,
       "date": "2026-02-12",
-      "cumulative_pnl": 2376.4,
-      "pdf_file": "Performance.20260212.174423.pdf"
+      "cumulative_pnl": 5811.1,
+      "pdf_file": "Performance.20260212.201144.pdf"
     }
   ]
 }

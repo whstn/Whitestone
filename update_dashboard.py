@@ -28,12 +28,12 @@ if os.path.exists(cumulative_file):
                 cumulative.update(loaded)
                 print("Loaded existing data")
             else:
-                print("cumulative_data.json is empty — starting fresh")
+                print("Empty JSON — starting fresh")
     except Exception as e:
-        print("Error loading cumulative_data.json:", e)
+        print("Error loading JSON:", e)
         print("Starting fresh")
 
-processed = {entry.get("pdf_file", "") for entry in cumulative.get("daily_entries", [])}
+processed = {entry.get("pdf_file", "") for entry in cumulative["daily_entries"]}
 
 pdf_files = glob.glob(os.path.join(pdf_folder, "**", "*Performance*.pdf"), recursive=True)
 
@@ -73,7 +73,7 @@ for pdf_path in sorted(pdf_files):
             "trades": []
         }
 
-        # Parse summary stats
+        # Parse summary stats from text
         lines = text.splitlines()
         for line in lines:
             line = line.strip()
@@ -126,10 +126,10 @@ for pdf_path in sorted(pdf_files):
                 except:
                     pass
 
-        # Trades table - find table with "P&L" or 9+ rows
+        # Trades table - find the table with 9 rows (header + 8 trades)
         for table in all_tables:
-            if len(table) >= 9:  # header + 8 trades in your example
-                print(f"  Found trades table with {len(table)-1} trades")
+            if len(table) == 9:  # your example has 9 rows
+                print(f"  Found trades table with 8 trades")
                 header = table[0]
                 pnl_col = -1
                 for i, h in enumerate(header):

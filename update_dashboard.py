@@ -22,17 +22,18 @@ cumulative = {
 if os.path.exists(cumulative_file):
     try:
         with open(cumulative_file, "r") as f:
-            loaded = json.load(f)
-            if isinstance(loaded, dict):
+            content = f.read().strip()
+            if content:
+                loaded = json.loads(content)
                 cumulative.update(loaded)
                 print("Loaded existing data")
             else:
-                print("Invalid JSON format — starting fresh")
+                print("cumulative_data.json is empty — starting fresh")
     except Exception as e:
         print("Error loading cumulative_data.json:", e)
         print("Starting fresh")
 
-processed = {entry.get("pdf_file", "") for entry in cumulative["daily_entries"]}
+processed = {entry.get("pdf_file", "") for entry in cumulative.get("daily_entries", [])}
 
 pdf_files = glob.glob(os.path.join(pdf_folder, "**", "*Performance*.pdf"), recursive=True)
 
@@ -125,7 +126,7 @@ for pdf_path in sorted(pdf_files):
                 except:
                     pass
 
-        # Trades table - find the table with "P&L" or 8+ rows
+        # Trades table - find table with "P&L" or 9+ rows
         for table in all_tables:
             if len(table) >= 9:  # header + 8 trades in your example
                 print(f"  Found trades table with {len(table)-1} trades")

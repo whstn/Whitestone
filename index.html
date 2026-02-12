@@ -41,12 +41,11 @@
           html += `
             <h3>ALL TRADES</h3>
             <table>
-              <tr><th>Gross P/L</th><th># of Trades</th><th># of Contracts</th><th>Avg. Trade Time</th><th>% Profitable</th><th>Expectancy</th><th>Fees & Comm.</th><th>Total P/L</th></tr>
+              <tr><th>Gross P/L</th><th># of Trades</th><th># of Contracts</th><th>% Profitable</th><th>Expectancy</th><th>Fees & Comm.</th><th>Total P/L</th></tr>
               <tr>
                 <td>$${latest.gross_pnl.toFixed(2)}</td>
                 <td>${latest.trades_count}</td>
-                <td>${latest.trades_count * 2.75}</td> <!-- placeholder -->
-                <td>1min 6sec</td>
+                <td>${latest.trades_count * 2.75}</td>
                 <td>${latest.win_rate.toFixed(2)}%</td>
                 <td>$${latest.expectancy || 'N/A'}</td>
                 <td>$${latest.fees.toFixed(2)}</td>
@@ -55,31 +54,25 @@
             </table>
           `;
 
-          // Profit & Losing Tables (placeholder - add real parsing later)
-          html += `
-            <h3>PROFIT TRADES</h3>
-            <table>
-              <tr><th>Total Profit</th><th># Winning</th><th>Largest Win</th><th>Avg. Win</th></tr>
-              <tr><td>$2,405.00</td><td>6</td><td>$680.00</td><td>$400.83</td></tr>
-            </table>
-
-            <h3>LOSING TRADES</h3>
-            <table>
-              <tr><th>Total Loss</th><th># Losing</th><th>Largest Loss</th><th>Avg. Loss</th></tr>
-              <tr><td>$(1,035.00)</td><td>2</td><td>$(735.00)</td><td>$(517.50)</td></tr>
-            </table>
-          `;
+          // Trades Table
+          if (latest.trades && latest.trades.length > 0) {
+            html += `
+              <h3>TRADES</h3>
+              <table>
+                <tr><th>Symbol</th><th>Qty</th><th>Buy Price</th><th>Buy Time</th><th>Sell Price</th><th>P&L</th></tr>
+            `;
+            latest.trades.forEach(t => {
+              html += `<tr><td>${t.symbol}</td><td>${t.qty}</td><td>${t.buy_price}</td><td>${t.buy_time}</td><td>${t.sell_price}</td><td>${t.pnl.toFixed(2)}</td></tr>`;
+            });
+            html += `</table>`;
+          }
 
           // Charts
           let dates = data.daily_entries.map(e => e.date);
           let pnls = data.daily_entries.map(e => e.cumulative_pnl);
-          let trades = data.daily_entries.map(e => e.trades_count || 0);
           html += `
             <div class="chart-container">
               <canvas id="pnlChart"></canvas>
-            </div>
-            <div class="chart-container">
-              <canvas id="winLossPie"></canvas>
             </div>
           `;
 
@@ -100,20 +93,6 @@
               }]
             },
             options: { scales: { y: { beginAtZero: true } } }
-          });
-
-          // Winning vs Losing Pie (placeholder - update with real data)
-          const ctxPie = document.getElementById('winLossPie').getContext('2d');
-          new Chart(ctxPie, {
-            type: 'pie',
-            data: {
-              labels: ['Winning Trades', 'Losing Trades'],
-              datasets: [{
-                data: [75, 25],
-                backgroundColor: ['#00ff00', '#ff0000']
-              }]
-            },
-            options: { plugins: { legend: { position: 'bottom' } } }
           });
 
         } else {

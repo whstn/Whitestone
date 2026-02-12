@@ -12,6 +12,7 @@ pdf_folder = script_folder
 
 cumulative_file = os.path.join(script_folder, "cumulative_data.json")
 
+# Safe load or initialize
 cumulative = {
     "start_date": "2026-02-12",
     "start_pnl": 0.0,
@@ -22,10 +23,14 @@ if os.path.exists(cumulative_file):
     try:
         with open(cumulative_file, "r") as f:
             loaded = json.load(f)
-            cumulative.update(loaded)
-            print("Loaded existing data")
-    except:
-        print("Invalid JSON — starting fresh")
+            if isinstance(loaded, dict):
+                cumulative.update(loaded)
+                print("Loaded existing data")
+            else:
+                print("Invalid JSON format — starting fresh")
+    except Exception as e:
+        print("Error loading cumulative_data.json:", e)
+        print("Starting fresh")
 
 processed = {entry.get("pdf_file", "") for entry in cumulative["daily_entries"]}
 
@@ -61,10 +66,13 @@ for pdf_path in sorted(pdf_files):
             "net_pnl": 0.0,
             "trades_count": 0,
             "win_rate": 0.0,
+            "expectancy": 0.0,
+            "max_runup": 0.0,
+            "max_drawdown": 0.0,
             "trades": []
         }
 
-        # Parse summary stats from text
+        # Parse summary stats
         lines = text.splitlines()
         for line in lines:
             line = line.strip()
@@ -98,11 +106,29 @@ for pdf_path in sorted(pdf_files):
                     today["trades_count"] = val
                 except:
                     pass
+            if "Expectancy" in line:
+                try:
+                    val = float(line.split()[-1].replace('$', ''))
+                    today["expectancy"] = val
+                except:
+                    pass
+            if "Max Run-up" in line:
+                try:
+                    val = float(line.split()[-1].replace(',', '').replace('$', ''))
+                    today["max_runup"] = val
+                except:
+                    pass
+            if "Max Drawdown" in line:
+                try:
+                    val = float(line.split()[-1].replace(',', '').replace('$', '').replace('(', '-').replace(')', ''))
+                    today["max_drawdown"] = val
+                except:
+                    pass
 
-        # Trades table - find the table with 9 rows (header + 8 trades)
+        # Trades table - find the table with "P&L" or 8+ rows
         for table in all_tables:
-            if len(table) == 9:  # your example has 9 rows
-                print(f"  Found trades table with 8 trades")
+            if len(table) >= 9:  # header + 8 trades in your example
+                print(f"  Found trades table with {len(table)-1} trades")
                 header = table[0]
                 pnl_col = -1
                 for i, h in enumerate(header):
@@ -129,13 +155,14 @@ for pdf_path in sorted(pdf_files):
                         except:
                             pass
 
+        # Prefer net from text if available
         if today["net_pnl"] != 0.0:
             today["pnl"] = today["net_pnl"]
         elif today["gross_pnl"] != 0.0:
             today["pnl"] = today["gross_pnl"] + today["fees"]
 
         if today["pnl"] == 0.0:
-            print("  No PnL data — skipping")
+            print("  No PnL data found — skipping")
             continue
 
         # Date from filename
@@ -166,5 +193,6 @@ if new_added:
     print("Now open GitHub Desktop → Commit → Push")
 else:
     print("\nNo new PDFs or no PnL found.")
+    print("Folder checked:", pdf_folder)
 
 input("\nPress Enter to close...")

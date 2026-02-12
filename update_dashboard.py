@@ -1,62 +1,88 @@
 import pdfplumber
 import json
 import os
+import glob
 from datetime import datetime
 
-# CHANGE THIS LINE TO YOUR PDF FILE NAME EACH DAY
-pdf_file = "daily_statement.pdf"  # Put today's PDF in this folder and rename it
+# This folder
+pdf_folder = "."
 
+# Cumulative file (will be created if missing)
 cumulative_file = "cumulative_data.json"
 
-# Load existing cumulative data (or start fresh)
+# Load or initialize cumulative data
 if os.path.exists(cumulative_file):
     with open(cumulative_file, "r") as f:
         cumulative = json.load(f)
 else:
     cumulative = {
-        "history": [],  # list of daily entries
-        "start_equity": 1000.0,  # your starting balance
-        "start_date": "2025-12-18"
+        "start_date": "2026-02-12",
+        "start_pnl": 0.0,
+        "daily_entries": []   # each day: {"date", "pnl", "cumulative_pnl", "pdf_file"}
     }
 
-# Extract today's data from PDF
-today_data = {}
-try:
-    with pdfplumber.open(pdf_file) as pdf:
-        text = ""
-        for page in pdf.pages:
-            text += page.extract_text() + "\n"
+# Already processed PDFs (to avoid duplicates)
+processed = {entry.get("pdf_file", "") for entry in cumulative["daily_entries"]}
 
-    lines = text.splitlines()
-    for line in lines:
-        line = line.strip()
-        if "Ending Equity" in line or "Account Equity" in line:
-            today_data["equity"] = float(line.split()[-1].replace(',', ''))
-        if "Net P/L" in line or "Daily P/L" in line:
-            today_data["pnl"] = float(line.split()[-1].replace(',', ''))
-        if "Date" in line and ("Equity" in line or "Statement" in line):
-            today_data["date"] = line.split()[1]
+# Find all Performance.*.pdf files
+pdf_files = glob.glob(os.path.join(pdf_folder, "Performance.*.pdf"))
 
-    if not today_data.get("date"):
-        today_data["date"] = datetime.now().strftime("%Y-%m-%d")
+new_added = False
 
-    # Calculate running totals
-    prev_equity = cumulative["history"][-1]["equity"] if cumulative["history"] else cumulative["start_equity"]
-    today_data["cumulative_pnl"] = prev_equity + today_data.get("pnl", 0) - cumulative["start_equity"]
-    today_data["running_equity"] = today_data["equity"]
+for pdf_path in sorted(pdf_files):
+    pdf_name = os.path.basename(pdf_path)
+    if pdf_name in processed:
+        continue  # skip already done
 
-    # Add to history
-    cumulative["history"].append(today_data)
+    print(f"New file found: {pdf_name}")
 
-    # Save updated cumulative file
+    try:
+        with pdfplumber.open(pdf_path) as pdf:
+            text = ""
+            for page in pdf.pages:
+                text += (page.extract_text() or "") + "\n"
+
+        lines = [line.strip() for line in text.splitlines() if line.strip()]
+
+        today = {"pnl": 0.0}
+        for line in lines:
+            if "Net P/L" in line or "Daily P/L" in line or "P/L" in line or "Profit/Loss" in line:
+                parts = line.split()
+                for part in parts[-3:]:  # check last few words
+                    try:
+                        val = float(part.replace(',', ''))
+                        today["pnl"] = val
+                        break
+                    except:
+                        pass
+
+        # Date from filename (Performance.YYYYMMDD....pdf)
+        try:
+            date_part = pdf_name.split('.')[1]
+            dt = datetime.strptime(date_part, "%Y%m%d")
+            today["date"] = dt.strftime("%Y-%m-%d")
+        except:
+            today["date"] = datetime.now().strftime("%Y-%m-%d")
+
+        # Cumulative PnL
+        last_cumulative = cumulative["daily_entries"][-1]["cumulative_pnl"] if cumulative["daily_entries"] else 0.0
+        today["cumulative_pnl"] = round(last_cumulative + today["pnl"], 2)
+        today["pdf_file"] = pdf_name
+
+        cumulative["daily_entries"].append(today)
+        new_added = True
+
+        print(f"  → Added {today['date']}: Daily PnL ${today['pnl']:.2f} | Cumulative ${today['cumulative_pnl']:.2f}")
+
+    except Exception as e:
+        print(f"  → Error reading {pdf_name}: {e}")
+
+if new_added:
     with open(cumulative_file, "w") as f:
         json.dump(cumulative, f, indent=2)
+    print("\nUpdated cumulative_data.json with new day(s).")
+    print("Now open GitHub Desktop → Commit → Push")
+else:
+    print("\nNo new PDFs or no PnL found — nothing changed.")
 
-    print("Success! cumulative_data.json updated with today's data.")
-    print("Now push this file to GitHub using GitHub Desktop.")
-
-except Exception as e:
-    print("Error reading PDF:", e)
-    print("Make sure the file is named 'daily_statement.pdf' and in this folder.")
-
-input("Press Enter to close...")
+input("\nPress Enter to close...")

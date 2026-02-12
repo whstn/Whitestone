@@ -1,1 +1,179 @@
-{}
+{
+  "start_date": "2026-02-12",
+  "start_pnl": 0.0,
+  "daily_entries": [
+    {
+      "pnl": 10518.75,
+      "gross_pnl": 0.0,
+      "fees": 0.0,
+      "net_pnl": 0.0,
+      "trades_count": 23,
+      "win_rate": 0.0,
+      "trades": [
+        {
+          "symbol": "Gross P/L",
+          "qty": "$2,895.00",
+          "buy_price": "",
+          "buy_time": "",
+          "sell_price": "",
+          "pnl": 2895.0
+        },
+        {
+          "symbol": "# of Trades",
+          "qty": "38",
+          "buy_price": "",
+          "buy_time": "",
+          "sell_price": "",
+          "pnl": 38.0
+        },
+        {
+          "symbol": "# of Contracts",
+          "qty": "136",
+          "buy_price": "",
+          "buy_time": "",
+          "sell_price": "",
+          "pnl": 136.0
+        },
+        {
+          "symbol": "Expectancy",
+          "qty": "$76.18",
+          "buy_price": "",
+          "buy_time": "",
+          "sell_price": "",
+          "pnl": 76.18
+        },
+        {
+          "symbol": "Trade Fees & Comm.",
+          "qty": "$(210.80)",
+          "buy_price": "",
+          "buy_time": "",
+          "sell_price": "",
+          "pnl": -210.8
+        },
+        {
+          "symbol": "Total P/L",
+          "qty": "$2,684.20",
+          "buy_price": "",
+          "buy_time": "",
+          "sell_price": "",
+          "pnl": 2684.2
+        },
+        {
+          "symbol": "Total Profit",
+          "qty": "$8,520.00",
+          "buy_price": "",
+          "buy_time": "",
+          "sell_price": "",
+          "pnl": 8520.0
+        },
+        {
+          "symbol": "# of Winning Trades",
+          "qty": "15",
+          "buy_price": "",
+          "buy_time": "",
+          "sell_price": "",
+          "pnl": 15.0
+        },
+        {
+          "symbol": "# of Winning Contracts",
+          "qty": "26",
+          "buy_price": "",
+          "buy_time": "",
+          "sell_price": "",
+          "pnl": 26.0
+        },
+        {
+          "symbol": "Largest Winning Trade",
+          "qty": "$1,350.00",
+          "buy_price": "",
+          "buy_time": "",
+          "sell_price": "",
+          "pnl": 1350.0
+        },
+        {
+          "symbol": "Avg. Winning Trade",
+          "qty": "$568.00",
+          "buy_price": "",
+          "buy_time": "",
+          "sell_price": "",
+          "pnl": 568.0
+        },
+        {
+          "symbol": "Std. Dev. Winning Trade",
+          "qty": "$377.70",
+          "buy_price": "",
+          "buy_time": "",
+          "sell_price": "",
+          "pnl": 377.7
+        },
+        {
+          "symbol": "Max Run-up",
+          "qty": "$3,434.70",
+          "buy_price": "",
+          "buy_time": "",
+          "sell_price": "",
+          "pnl": 3434.7
+        },
+        {
+          "symbol": "Total Loss",
+          "qty": "$(5,625.00)",
+          "buy_price": "",
+          "buy_time": "",
+          "sell_price": "",
+          "pnl": -5625.0
+        },
+        {
+          "symbol": "# of Losing Trades",
+          "qty": "23",
+          "buy_price": "",
+          "buy_time": "",
+          "sell_price": "",
+          "pnl": 23.0
+        },
+        {
+          "symbol": "# of Losing Contracts",
+          "qty": "42",
+          "buy_price": "",
+          "buy_time": "",
+          "sell_price": "",
+          "pnl": 42.0
+        },
+        {
+          "symbol": "Largest Losing Trade",
+          "qty": "$(735.00)",
+          "buy_price": "",
+          "buy_time": "",
+          "sell_price": "",
+          "pnl": -735.0
+        },
+        {
+          "symbol": "Avg. Losing Trade",
+          "qty": "$(244.57)",
+          "buy_price": "",
+          "buy_time": "",
+          "sell_price": "",
+          "pnl": -244.57
+        },
+        {
+          "symbol": "Std. Dev. Losing Trade",
+          "qty": "$186.49",
+          "buy_price": "",
+          "buy_time": "",
+          "sell_price": "",
+          "pnl": 186.49
+        },
+        {
+          "symbol": "Max Drawdown",
+          "qty": "$(3,038.15)",
+          "buy_price": "",
+          "buy_time": "",
+          "sell_price": "",
+          "pnl": -3038.15
+        }
+      ],
+      "date": "2026-02-12",
+      "cumulative_pnl": 10518.75,
+      "pdf_file": "Performance.20260212.203634.pdf"
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Whitestone Vaults - Performance</title>
+  <style>
+    body { background: #0e1117; color: #d4af37; font-family: Georgia, serif; text-align: center; margin: 0; padding: 20px; }
+    h1 { color: #d4af37; }
+    .vault { background: #1c2526; border: 1px solid #d4af37; padding: 30px; margin: 20px auto; max-width: 700px; border-radius: 10px; }
+    .metric { font-size: 1.8rem; margin: 15px 0; }
+    .footer { margin-top: 50px; font-style: italic; }
+  </style>
+</head>
+<body>
+  <h1>WHITESTONE VAULTS</h1>
+  <p style="color:#d4af37;">Alpha Vault • Consistency</p>
+
+  <div class="vault" id="report">
+    <p>Loading performance...</p>
+  </div>
+
+  <script>
+    fetch('cumulative_data.json')
+      .then(res => res.json())
+      .then(data => {
+        let html = '';
+        if (data.daily_entries && data.daily_entries.length > 0) {
+          let latest = data.daily_entries[data.daily_entries.length - 1];
+          let total_pnl = latest.cumulative_pnl || 0;
+          html = `
+            <p class="metric"><strong>Cumulative PnL:</strong> $${total_pnl.toFixed(2)}</p>
+            <p class="metric"><strong>From Start (${data.start_date}):</strong> $${total_pnl.toFixed(2)}</p>
+          `;
+        } else {
+          html = '<p>No data yet — run the script after adding a PDF.</p>';
+        }
+        document.getElementById('report').innerHTML = html;
+      })
+      .catch(err => {
+        document.getElementById('report').innerHTML = '<p style="color:red;">Failed to load data.</p>';
+      });
+  </script>
+
+  <div class="footer"><em>Discipline is Luxury.</em></div>
+</body>
+</html>

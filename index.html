@@ -1,222 +1,238 @@
-import streamlit as st
-import pdfplumber
-import pandas as pd
-from datetime import datetime
-import plotly.express as px
-import plotly.graph_objects as go
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Whitestone Vaults</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      background-color: #0e1117;
+      color: #d4af37;
+      font-family: Georgia, serif;
+      margin: 0;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    h1 {
+      text-align: center;
+      color: #d4af37;
+      margin-bottom: 10px;
+      font-size: 3rem;
+    }
+    .subtitle {
+      text-align: center;
+      color: #d4af37;
+      font-style: italic;
+      margin-bottom: 40px;
+    }
+    .vault-card {
+      background-color: #1c2526;
+      border: 1px solid #d4af37;
+      border-radius: 10px;
+      padding: 25px;
+      margin: 20px auto;
+      max-width: 1200px;
+    }
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 25px;
+      margin: 30px 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
+      font-size: 0.95rem;
+    }
+    th, td {
+      border: 1px solid #d4af37;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #d4af37;
+      color: #0e1117;
+      font-weight: bold;
+    }
+    .positive { color: #00ff00; }
+    .negative { color: #ff4d4d; }
+    .chart-container {
+      background: #1c2526;
+      border: 1px solid #d4af37;
+      border-radius: 10px;
+      padding: 15px;
+      margin: 20px auto;
+      max-width: 600px;
+    }
+    .footer {
+      text-align: center;
+      font-style: italic;
+      color: #d4af37;
+      margin-top: 60px;
+    }
+  </style>
+</head>
+<body>
 
-# Page config
-st.set_page_config(page_title="Whitestone Vaults", layout="wide", page_icon="💎")
+  <h1>WHITESTONE VAULTS</h1>
+  <p class="subtitle">Alpha Vault • Consistency</p>
 
-# Custom CSS
-st.markdown("""
-<style>
-    .main {background-color: #0e1117; color: #d4af37;}
-    .stApp {background-color: #0e1117;}
-    h1, h2, h3 {color: #d4af37; font-family: 'Georgia', serif; text-align: center;}
-    .metric-label {color: #d4af37;}
-    .metric-value {color: #ffffff; font-size: 2.5rem;}
-    .vault-card {background-color: #1c2526; padding: 20px; border-radius: 10px; border: 1px solid #d4af37;}
-    .footer {text-align: center; color: #d4af37; font-style: italic; margin-top: 50px;}
-</style>
-""", unsafe_allow_html=True)
+  <div class="vault-card">
+    <div class="grid-container">
 
-# Title
-st.markdown("<h1>WHITESTONE VAULTS</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #d4af37;'>London Time · LJD</p>", unsafe_allow_html=True)
+      <!-- ALL TRADES -->
+      <div>
+        <h3>ALL TRADES</h3>
+        <table>
+          <tr><th>Gross P/L</th><td class="positive">$1,370.00</td></tr>
+          <tr><th># of Trades</th><td>8</td></tr>
+          <tr><th># of Contracts</th><td>22</td></tr>
+          <tr><th>Avg. Trade Time</th><td>1min 6sec</td></tr>
+          <tr><th>% Profitable Trades</th><td>75.00%</td></tr>
+          <tr><th>Expectancy</th><td>$171.25</td></tr>
+          <tr><th>Trade Fees & Comm.</th><td class="negative">$(34.10)</td></tr>
+          <tr><th>Total P/L</th><td class="positive">$1,335.90</td></tr>
+        </table>
+      </div>
 
-# Upload PDF
-uploaded_file = st.file_uploader("Upload Daily Performance PDF", type="pdf")
+      <!-- PROFIT TRADES -->
+      <div>
+        <h3>PROFIT TRADES</h3>
+        <table>
+          <tr><th>Total Profit</th><td class="positive">$2,405.00</td></tr>
+          <tr><th># of Winning Trades</th><td>6</td></tr>
+          <tr><th># of Winning Contracts</th><td>7</td></tr>
+          <tr><th>Largest Winning Trade</th><td>$680.00</td></tr>
+          <tr><th>Avg. Winning Trade</th><td>$400.83</td></tr>
+          <tr><th>Std. Dev. Winning Trade</th><td>$215.14</td></tr>
+          <tr><th>Avg. Winning Trade Time</th><td>1min 2sec</td></tr>
+          <tr><th>Longest Winning Trade Time</th><td>1min 44sec</td></tr>
+          <tr><th>Max Run-up</th><td>$2,086.40</td></tr>
+          <tr><th>Max Run-up from</th><td>02/12/2026 16:22:42</td></tr>
+          <tr><th>Max Run-up to</th><td>02/12/2026 17:23:17</td></tr>
+        </table>
+      </div>
 
-if uploaded_file is not None:
-    # Parse PDF
-    with pdfplumber.open(uploaded_file) as pdf:
-        text = ""
-        tables = []
-        for page in pdf.pages:
-            page_text = page.extract_text()
-            if page_text:
-                text += page_text + "\n"
-            tables.extend(page.extract_tables())
+      <!-- LOSING TRADES -->
+      <div>
+        <h3>LOSING TRADES</h3>
+        <table>
+          <tr><th>Total Loss</th><td class="negative">$(1,035.00)</td></tr>
+          <tr><th># of Losing Trades</th><td>2</td></tr>
+          <tr><th># of Losing Contracts</th><td>4</td></tr>
+          <tr><th>Largest Losing Trade</th><td>$(735.00)</td></tr>
+          <tr><th>Avg. Losing Trade</th><td>$(517.50)</td></tr>
+          <tr><th>Std. Dev. Losing Trade</th><td>$217.50</td></tr>
+          <tr><th>Avg. Losing Trade Time</th><td>1min 17sec</td></tr>
+          <tr><th>Longest Losing Trade Time</th><td>1min 40sec</td></tr>
+          <tr><th>Max Drawdown</th><td>$(745.85)</td></tr>
+          <tr><th>Max Drawdown from</th><td>02/12/2026 16:18:53</td></tr>
+          <tr><th>Max Drawdown to</th><td>02/12/2026 16:22:42</td></tr>
+        </table>
+      </div>
 
-    # Parse summary stats
-    summary = {
-        "gross_pnl": 0.0,
-        "trades_count": 0,
-        "contracts": 0,
-        "win_rate": 0.0,
-        "expectancy": 0.0,
-        "fees": 0.0,
-        "net_pnl": 0.0,
-        "total_profit": 0.0,
-        "winning_trades": 0,
-        "winning_contracts": 0,
-        "largest_win": 0.0,
-        "avg_win": 0.0,
-        "std_dev_win": 0.0,
-        "avg_win_time": "",
-        "longest_win_time": "",
-        "max_runup": 0.0,
-        "total_loss": 0.0,
-        "losing_trades": 0,
-        "losing_contracts": 0,
-        "largest_loss": 0.0,
-        "avg_loss": 0.0,
-        "std_dev_loss": 0.0,
-        "avg_loss_time": "",
-        "longest_loss_time": "",
-        "max_drawdown": 0.0
+    </div>
+
+    <!-- Gross Loss Breakdown Pie -->
+    <div class="chart-container">
+      <h3>GROSS LOSS BREAKDOWN (LOSS TRADES, TRADE FEES & COMM.)</h3>
+      <canvas id="grossLossPie"></canvas>
+    </div>
+
+    <!-- P&L History (Cumulative without / with fees) -->
+    <div class="chart-container">
+      <h3>P&L HISTORY (CUMULATIVE WITHOUT FEES)</h3>
+      <canvas id="pnlHistoryNoFees"></canvas>
+    </div>
+
+    <div class="chart-container">
+      <h3>P&L HISTORY (CUMULATIVE WITH FEES)</h3>
+      <canvas id="pnlHistoryWithFees"></canvas>
+    </div>
+
+    <!-- P&L Distribution & P&L per Time of Day -->
+    <div class="chart-container">
+      <h3>P&L DISTRIBUTION</h3>
+      <canvas id="pnlDistribution"></canvas>
+    </div>
+
+    <div class="chart-container">
+      <h3>P&L PER TIME OF DAY</h3>
+      <canvas id="pnlPerTime"></canvas>
+    </div>
+
+    <!-- Trades Table -->
+    <h3>TRADES</h3>
+    <table>
+      <tr>
+        <th>Symbol</th><th>Qty</th><th>Buy Price</th><th>Buy Time</th>
+        <th>Duration</th><th>Sell Time</th><th>Sell Price</th><th>P&L</th>
+      </tr>
+      <tr><td>NQH6</td><td>3</td><td>25220.50</td><td>02/12/2026 16:18:53</td>
+        <td>54sec</td><td>02/12/2026 16:19:47</td><td>25208.25</td><td class="negative">$(735.00)</td></tr>
+      <tr><td>NQH6</td><td>2</td><td>25214.75</td><td>02/12/2026 16:21:31</td>
+        <td>1min 10sec</td><td>02/12/2026 16:22:42</td><td>25231.75</td><td class="positive">$680.00</td></tr>
+      <tr><td>NQH6</td><td>1</td><td>25238.75</td><td>02/12/2026 16:28:25</td>
+        <td>1min 40sec</td><td>02/12/2026 16:26:45</td><td>25223.75</td><td class="negative">$(300.00)</td></tr>
+      <tr><td>NQH6</td><td>1</td><td>25194.50</td><td>02/12/2026 16:32:51</td>
+        <td>22sec</td><td>02/12/2026 16:32:28</td><td>25212.00</td><td class="positive">$350.00</td></tr>
+      <tr><td>NQH6</td><td>1</td><td>25185.50</td><td>02/12/2026 16:33:34</td>
+        <td>1min 5sec</td><td>02/12/2026 16:32:28</td><td>25212.00</td><td class="positive">$530.00</td></tr>
+      <tr><td>NQH6</td><td>1</td><td>25090.25</td><td>02/12/2026 16:50:11</td>
+        <td>1min 44sec</td><td>02/12/2026 16:51:55</td><td>25117.25</td><td class="positive">$540.00</td></tr>
+      <tr><td>NQH6</td><td>1</td><td>25050.75</td><td>02/12/2026 16:55:31</td>
+        <td>21sec</td><td>02/12/2026 16:55:52</td><td>25051.50</td><td class="positive">$15.00</td></tr>
+      <tr><td>NQH6</td><td>1</td><td>24880.25</td><td>02/12/2026 17:21:48</td>
+        <td>1min 29sec</td><td>02/12/2026 17:23:17</td><td>24894.75</td><td class="positive">$290.00</td></tr>
+    </table>
+
+  </div>
+
+  <div class="footer"><em>Discipline is Luxury.</em></div>
+
+  <script>
+    // Winning vs Losing Pie
+    const ctxPie = document.getElementById('winLossPie')?.getContext('2d');
+    if (ctxPie) {
+      new Chart(ctxPie, {
+        type: 'pie',
+        data: {
+          labels: ['Winning Trades', 'Losing Trades'],
+          datasets: [{
+            data: [75, 25],
+            backgroundColor: ['#00ff00', '#ff4d4d']
+          }]
+        },
+        options: {
+          plugins: { legend: { position: 'bottom', labels: { color: '#d4af37' } } }
+        }
+      });
     }
 
-    lines = text.splitlines()
-    for line in lines:
-        line = line.strip()
-        if line and ' $' in line:
-            parts = line.split('$')
-            key = parts[0].strip()
-            value = parts[1].strip().replace(',', '')
-            try:
-                val = float(value.replace('(', '-').replace(')', ''))
-                if "Gross P/L" in key:
-                    summary["gross_pnl"] = val
-                elif "Total Profit" in key:
-                    summary["total_profit"] = val
-                elif "Total Loss" in key:
-                    summary["total_loss"] = val
-                elif "Trade Fees & Comm." in key:
-                    summary["fees"] = val
-                elif "Total P/L" in key:
-                    summary["net_pnl"] = val
-                elif "Largest Winning Trade" in key:
-                    summary["largest_win"] = val
-                elif "Largest Losing Trade" in key:
-                    summary["largest_loss"] = val
-                elif "Avg. Winning Trade" in key:
-                    summary["avg_win"] = val
-                elif "Avg. Losing Trade" in key:
-                    summary["avg_loss"] = val
-                elif "Std. Dev. Winning Trade" in key:
-                    summary["std_dev_win"] = val
-                elif "Std. Dev. Losing Trade" in key:
-                    summary["std_dev_loss"] = val
-                elif "Expectancy" in key:
-                    summary["expectancy"] = val
-                elif "Max Run-up" in key:
-                    summary["max_runup"] = val
-                elif "Max Drawdown" in key:
-                    summary["max_drawdown"] = val
-            except:
-                pass
+    // P&L History (placeholder cumulative)
+    const ctxHistoryNoFees = document.getElementById('pnlHistoryNoFees')?.getContext('2d');
+    if (ctxHistoryNoFees) {
+      new Chart(ctxHistoryNoFees, {
+        type: 'bar',
+        data: {
+          labels: ['Feb 12'],
+          datasets: [{
+            label: 'Cumulative without Fees',
+            data: [1370],
+            backgroundColor: '#d4af37'
+          }]
+        },
+        options: {
+          scales: { y: { beginAtZero: true, ticks: { color: '#d4af37' } } },
+          plugins: { legend: { labels: { color: '#d4af37' } } }
+        }
+      });
+    }
 
-        if "% Profitable Trades" in line:
-            parts = line.split()
-            summary["win_rate"] = float(parts[-1].replace('%', ''))
-        if "# of Trades" in line:
-            parts = line.split()
-            summary["trades_count"] = int(parts[-1])
-        if "# of Contracts" in line:
-            parts = line.split()
-            summary["contracts"] = int(parts[-1])
-        if "# of Winning Trades" in line:
-            parts = line.split()
-            summary["winning_trades"] = int(parts[-1])
-        if "# of Losing Trades" in line:
-            parts = line.split()
-            summary["losing_trades"] = int(parts[-1])
-        if "Avg. Winning Trade Time" in line:
-            summary["avg_win_time"] = line.split()[-1]
-        if "Avg. Losing Trade Time" in line:
-            summary["avg_loss_time"] = line.split()[-1]
-
-    # Parse trades table
-    trades = []
-    trades_text = text.split('TRADES')[1]
-    trades_lines = trades_text.splitlines()
-    i = 0
-    while i < len(trades_lines):
-        line = trades_lines[i].strip()
-        if line and line[0].isupper() and 'NQH6' in line:  # symbol lines
-            row = line.split()
-            symbol = row[0]
-            qty = row[1]
-            buy_price = row[2]
-            buy_time = ' '.join(row[3:5])  # e.g. 02/12/2026 16:18:53
-            i += 1
-            next_line = trades_lines[i].strip()
-            duration = next_line if next_line and not next_line[0].isupper() else ''
-            i += 1
-            next_line = trades_lines[i].strip()
-            sell_time = ' '.join(next_line.split()[:5])  # e.g. 02/12/2026 16:19:47
-            sell_price = next_line.split()[-2]
-            pnl = next_line.split()[-1].replace('$', '').replace('(', '-').replace(')', '')
-            trades.append({
-                "symbol": symbol,
-                "qty": qty,
-                "buy_price": buy_price,
-                "buy_time": buy_time,
-                "duration": duration,
-                "sell_time": sell_time,
-                "sell_price": sell_price,
-                "pnl": float(pnl)
-            })
-        i += 1
-
-    # Cumulative PnL (using net PnL)
-    last_cumulative = cumulative["daily_entries"][-1]["cumulative_pnl"] if cumulative["daily_entries"] else 0.0
-    cumulative_pnl = round(last_cumulative + summary["net_pnl"], 2)
-
-    # Display Metrics
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.markdown(f"""
-        <div class="vault-card">
-            <p class="metric-label">NET PNL</p>
-            <p class="metric-value">${summary['net_pnl']:.0f}</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with col2:
-        weekly_return = cumulative_pnl / 1000 * 100  # placeholder, replace with real calc
-        color = "#00ff00" if weekly_return >= 0 else "#ff0000"
-        st.markdown(f"""
-        <div class="vault-card">
-            <p class="metric-label">WEEKLY RETURN</p>
-            <p class="metric-value" style="color: {color};">{weekly_return:+.1f}%</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with col3:
-        st.markdown(f"""
-        <div class="vault-card">
-            <p class="metric-label">DRAWDOWN</p>
-            <p class="metric-value" style="color: #ff0000;">{summary['max_drawdown']:.1f}%</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-    # Vault Alpha
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("""
-    <div class="vault-card" style="text-align: center; max-width: 600px; margin: 0 auto;">
-        <h3>ALPHA VAULT</h3>
-        <p>CONSISTENCY</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Equity Chart (placeholder)
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("<h3>EQUITY</h3>", unsafe_allow_html=True)
-    fig_eq = go.Figure()
-    fig_eq.add_trace(go.Scatter(y=[1000, 1000 + summary['net_pnl']], line=dict(color="#d4af37", width=3)))
-    fig_eq.update_layout(plot_bgcolor="#1c2526", paper_bgcolor="#1c2526", font=dict(color="#d4af37"))
-    st.plotly_chart(fig_eq, use_container_width=True)
-
-    # Trade History
-    st.markdown("<br><h2>Trade History</h2>", unsafe_allow_html=True)
-    trades_df = pd.DataFrame(trades)
-    if not trades_df.empty:
-        st.dataframe(trades_df, use_container_width=True)
-    else:
-        st.info("No trades found.")
-
-    # Footer
-    st.markdown("<div class='footer'><em>Discipline is Luxury.</em></div>", unsafe_allow_html=True)
+    // Add more charts similarly (P&L Distribution, P&L per Time, etc.)
+    // You can expand this section when you have more days of data
+  </script>
+</body>
+</html>
